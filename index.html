@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShieldAuth | Secure Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h2>ShieldAuth</h2>
+        <p id="status-text">Identify yourself to proceed.</p>
+
+        <div class="form">
+            <input type="email" id="email" placeholder="Email Address">
+            <div class="password-wrapper">
+                <input type="password" id="password" placeholder="Password">
+                <button type="button" id="togglePassword" onclick="toggleView()">Show</button>      </div>
+
+            <div class="row">
+                <button onclick="auth('register')">Register</button>
+                <button onclick="auth('login')" class="primary-btn">Login</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            Device Recognition ID: <span id="display-id">...</span>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

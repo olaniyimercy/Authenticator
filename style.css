@@ -1,0 +1,103 @@
+body {
+  background-color: #0f172a;
+  font-family: "Inter", sans-serif;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.container {
+  background: #1e293b;
+  padding: 40px;
+  border-radius: 12px;
+  width: 350px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: white;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  background: #475569;
+  color: white;
+}
+
+.primary-btn {
+  background: #3b82f6;
+}
+.primary-btn:hover {
+  background: #2563eb;
+}
+
+.footer {
+  margin-top: 25px;
+  font-size: 11px;
+  color: #64748b;
+  background: #0f172a;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.success {
+  color: #4ade80;
+  font-weight: bold;
+}
+.error {
+  color: #f87171;
+  font-weight: bold;
+}
+
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Ensure the input has padding on the right so text doesn't go under the button */
+#password {
+  width: 100%;
+  padding-right: 60px;
+  box-sizing: border-box;
+}
+
+#togglePassword {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #3b82f6;
+  font-size: 12px;
+  cursor: pointer;
+  width: auto; /* Overrides the full-width button style from before */
+  padding: 5px;
+}
+
+#togglePassword:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
