@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcrypt");
 const path = require("path");
-
 const app = express();
 
 // Middleware
@@ -13,7 +12,7 @@ app.use(express.static("public")); // Serves your HTML/CSS files
 // Mock Database (Data resets when server restarts)
 const users = [];
 
-// 1. REGISTER: Create user and save the initial device ID
+//REGISTER: Create user and save the initial device ID
 app.post("/register", async (req, res) => {
   try {
     const { email, password, deviceId } = req.body;
@@ -66,6 +65,5 @@ app.post("/login", async (req, res) => {
 // Start Server
 const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`✅ Security Server running at http://localhost:${PORT}`);
+  console.log(`Security Server running at http://localhost:${PORT}`);
 });
-

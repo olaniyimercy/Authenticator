@@ -76,7 +76,6 @@ button {
   width: 100%;
 }
 
-/* Ensure the input has padding on the right so text doesn't go under the button */
 #password {
   width: 100%;
   padding-right: 60px;
@@ -93,7 +92,7 @@ button {
   color: #3b82f6;
   font-size: 12px;
   cursor: pointer;
-  width: auto; /* Overrides the full-width button style from before */
+  width: auto; 
   padding: 5px;
 }
 
