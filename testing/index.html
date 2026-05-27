@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShieldAuth | Core System Gatekeeper</title>
+    <style>
+        body {
+            background: #0f172a;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 35px;
+            border-radius: 12px;
+            width: 360px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 8px;
+            color: #3b82f6;
+        }
+
+        p {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-top: 0;
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #f8fafc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        input:focus {
+            outline: 2px solid #3b82f6;
+            border-color: transparent;
+        }
+
+        .password-container {
+            position: relative;
+        }
+
+        .toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        button.action {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            background: #475569;
+            color: white;
+        }
+
+        button.primary {
+            background: #3b82f6;
+        }
+
+        button.primary:hover {
+            background: #2563eb;
+        }
+
+        button.action:hover:not(.primary) {
+            background: #334155;
+        }
+
+        .utilities {
+            margin-top: 20px;
+            font-size: 13px;
+        }
+
+        .utilities a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .utilities a:hover {
+            text-decoration: underline;
+        }
+
+        .status-badge {
+            margin-top: 24px;
+            font-size: 11px;
+            color: #64748b;
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 6px;
+            word-break: break-all;
+        }
+
+        .success {
+            color: #4ade80 !important;
+            font-weight: bold;
+        }
+
+        .error {
+            color: #f87171 !important;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <h2 id="form-title">ShieldAuth Portal</h2>
+        <p id="status-text">Hardware profile mapping protocol initialized.</p>
+
+        <div id="auth-fields">
+            <div class="input-group">
+                <input type="text" id="username" placeholder="User Profile Identifier (Username)">
+            </div>
+            <div class="input-group password-container">
+                <input type="password" id="password" placeholder="Key Phrase (Password)">
+                <button type="button" class="toggle-btn" onclick="toggleMask('password', this)">Show</button>
+            </div>
+            <div class="btn-row">
+                <button class="action" onclick="submitAuthentication('/register')">Register</button>
+                <button class="action primary" onclick="submitAuthentication('/login')">Authorize Account</button>
+            </div>
+            <div class="utilities">
+                <a href="#" onclick="transitionUI('forgot')">Forgot Credentials?</a>
+            </div>
+        </div>
+
+        <div id="reset-fields" class="hidden">
+            <div class="input-group password-container">
+                <input type="password" id="new-password" placeholder="Define Overwrite Password">
+                <button type="button" class="toggle-btn" onclick="toggleMask('new-password', this)">Show</button>
+            </div>
+            <div class="btn-row">
+                <button class="action primary" onclick="submitPasswordOverwrite()">Update Profile</button>
+            </div>
+            <div class="utilities">
+                <a href="#" onclick="transitionUI('auth')">Abort Reset Flow</a>
+            </div>
+        </div>
+
+        <div class="status-badge">
+            Target Hardware Profile ID: <span id="hardware-id">Tracking...</span>
+        </div>
+    </div>
+
+    <script>
+        // 1. RESOLVE UNIQUE LOCAL HARDWARE ENVELOPE VALUE
+        function extractDeviceSignature() {
+            let id = localStorage.getItem('sh_hardware_token');
+            if (!id) {
+                // Generate simple device identifier string
+                id = 'NODE-HW-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+                localStorage.setItem('sh_hardware_token', id);
+            }
+            return id;
+        }
+
+        const localHardwareSignature = extractDeviceSignature();
+        document.getElementById('hardware-id').innerText = localHardwareSignature;
+
+        // 2. PARSE ROUTING QUERY CONFIGURATION PARAMETERS ON LOAD
+        const SEARCH_QUERIES = new URLSearchParams(window.location.search);
+        const RECOVERY_TOKEN = SEARCH_QUERIES.get('token');
+
+        if (RECOVERY_TOKEN) {
+            transitionUI('reset');
+            document.getElementById('status-text').innerText = "Cryptographic validation match. Supply new access key profile.";
+        }
+
+        // 3. SWITCH VIEW MANAGER STATE ENGINE
+        function transitionUI(targetView) {
+            const authBlock = document.getElementById('auth-fields');
+            const resetBlock = document.getElementById('reset-fields');
+            const masterTitle = document.getElementById('form-title');
+
+            if (targetView === 'forgot') {
+                const usernameVal = document.getElementById('username').value;
+                if (!usernameVal) {
+                    alert("Declare user identifier entry before seeking system retrieval data.");
+                    return;
+                }
+                dispatchRecoveryRequest(usernameVal);
+            } else if (targetView === 'reset') {
+                authBlock.classList.add('hidden');
+                resetBlock.classList.remove('hidden');
+                masterTitle.innerText = "System Key Reset";
+            } else {
+                authBlock.classList.remove('hidden');
+                resetBlock.classList.add('hidden');
+                masterTitle.innerText = "ShieldAuth Portal";
+                // Wash browser query strings clean
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        // 4. MASK VIEW TOGGLE LOGIC
+        function toggleMask(targetFieldId, triggerElement) {
+            const field = document.getElementById(targetFieldId);
+            if (field.type === 'password') {
+                field.type = 'text';
+                triggerElement.innerText = 'Hide';
+            } else {
+                field.type = 'password';
+                triggerElement.innerText = 'Show';
+            }
+        }
+
+        // 5. BACKEND REST DATA SUBMISSIONS VIA FETCH LAYER
+        async function submitAuthentication(endpoint) {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const feedbackText = document.getElementById('status-text');
+
+            if (!username || !password) return alert("Fill in username and password values.");
+
+            try {
+                const response = await fetch(`http://localhost:3000${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, deviceId: localHardwareSignature })
+                });
+
+                const data = await response.json();
+                feedbackText.innerText = data.message;
+                feedbackText.className = response.ok ? "success" : "error";
+            } catch (err) {
+                feedbackText.innerText = "Failed connection interface. Confirm server runtime node configuration.";
+                feedbackText.className = "error";
+            }
+        }
+
+        async function dispatchRecoveryRequest(username) {
+            const feedbackText = document.getElementById('status-text');
+            try {
+                const response = await fetch('http://localhost:3000/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+                const data = await response.json();
+                feedbackText.innerText = data.message;
+                feedbackText.className = "success";
+            } catch (err) {
+                feedbackText.innerText = "Transaction handshake communication error.";
+                feedbackText.className = "error";
+            }
+        }
+
+        async function submitPasswordOverwrite() {
+            const newPassword = document.getElementById('new-password').value;
+            const feedbackText = document.getElementById('status-text');
+
+            if (!newPassword) return alert("Password criteria must not be null.");
+
+            try {
+                const response = await fetch('http://localhost:3000/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: RECOVERY_TOKEN, newPassword })
+                });
+
+                const data = await response.json();
+                feedbackText.innerText = data.message;
+                feedbackText.className = response.ok ? "success" : "error";
+
+                if (response.ok) {
+                    setTimeout(() => { transitionUI('auth'); }, 2000);
+                }
+            } catch (err) {
+                feedbackText.innerText = "Critical error overriding server password tables.";
+                feedbackText.className = "error";
+            }
+        }
+    </script>
+</body>
+
+</html>
